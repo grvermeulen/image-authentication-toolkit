@@ -47,6 +47,15 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
 .export-section { margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6; }
 .export-btn { background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; text-decoration: none; display: inline-block; }
 .export-btn:hover { background: #218838; }
+.analysis-tabs { margin: 20px 0; }
+.analysis-method { background: white; margin: 10px 0; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; }
+.analysis-method h4 { margin: 0 0 10px 0; color: #333; }
+.overall-result { text-align: center; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 5px; }
+.tab-content { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.comprehensive-section { background: #f8f9fa; padding: 20px; border-radius: 5px; margin-top: 20px; }
+.method-score { font-weight: bold; color: #007bff; }
+.indicator-list { margin: 10px 0; padding-left: 20px; }
+.indicator-list li { margin: 5px 0; color: #dc3545; }
 </style>
 </head>
 <body>
@@ -79,7 +88,124 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
   </div>
   
   <div class="analysis-section">
-    <h3>🎯 Authentication Report</h3>
+    {% if comprehensive_analysis %}
+    <h3>🎯 Comprehensive Authentication Report</h3>
+    
+    <div class="overall-result">
+      <div class="result-badge {{ comprehensive_analysis.overall_result.lower() }}">
+        {{ comprehensive_analysis.overall_result.upper() }}
+      </div>
+      <div style="margin: 15px 0;">
+        <strong>Overall Confidence: {{ comprehensive_analysis.overall_score }}%</strong>
+        <div class="confidence-bar">
+          <div class="confidence-fill {% if comprehensive_analysis.overall_score >= 70 %}confidence-high{% elif comprehensive_analysis.overall_score >= 40 %}confidence-medium{% else %}confidence-low{% endif %}" 
+               style="width: {{ comprehensive_analysis.overall_score }}%;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="analysis-tabs">
+      <div class="tab-content">
+        <div class="analysis-method">
+          <h4>📋 Metadata Analysis</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.metadata_analysis.metadata_score }}%</p>
+          {% if comprehensive_analysis.metadata_analysis.suspicious_indicators %}
+          <ul class="indicator-list">
+            {% for indicator in comprehensive_analysis.metadata_analysis.suspicious_indicators %}
+            <li>{{ indicator }}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <p>No suspicious metadata indicators found.</p>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>🗜️ Compression Analysis</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.compression_analysis.compression_score }}%</p>
+          <p>Estimated Quality: {{ comprehensive_analysis.compression_analysis.estimated_quality }}%</p>
+          <p>Compression Ratio: {{ "%.3f"|format(comprehensive_analysis.compression_analysis.compression_ratio) }}</p>
+          {% if comprehensive_analysis.compression_analysis.recompression_indicators %}
+          <ul class="indicator-list">
+            {% for indicator in comprehensive_analysis.compression_analysis.recompression_indicators %}
+            <li>{{ indicator }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>🔍 Copy-Move Detection</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.copy_move_analysis.copy_move_score }}%</p>
+          <p>Suspicious Regions: {{ comprehensive_analysis.copy_move_analysis.suspicious_regions }}</p>
+          <p>Detection Confidence: {{ comprehensive_analysis.copy_move_analysis.confidence }}%</p>
+          {% if comprehensive_analysis.copy_move_analysis.copy_move_detected %}
+          <p style="color: #dc3545;">⚠️ Copy-move manipulation detected!</p>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>📊 Noise Pattern Analysis</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.noise_analysis.noise_score }}%</p>
+          <p>Noise Std: {{ "%.2f"|format(comprehensive_analysis.noise_analysis.noise_std) }}</p>
+          <p>Noise Mean: {{ "%.2f"|format(comprehensive_analysis.noise_analysis.noise_mean) }}</p>
+          {% if comprehensive_analysis.noise_analysis.artificial_indicators %}
+          <ul class="indicator-list">
+            {% for indicator in comprehensive_analysis.noise_analysis.artificial_indicators %}
+            <li>{{ indicator }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>📈 Histogram Analysis</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.histogram_analysis.histogram_score }}%</p>
+          <p>Histogram Peaks: {{ comprehensive_analysis.histogram_analysis.total_peaks }}</p>
+          <p>Histogram Gaps: {{ comprehensive_analysis.histogram_analysis.total_gaps }}</p>
+          {% if comprehensive_analysis.histogram_analysis.histogram_indicators %}
+          <ul class="indicator-list">
+            {% for indicator in comprehensive_analysis.histogram_analysis.histogram_indicators %}
+            <li>{{ indicator }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>🤖 AI Detection</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.ai_analysis.ai_score }}%</p>
+          <p>AI Generated: {{ "Yes" if comprehensive_analysis.ai_analysis.ai_detected else "No" }}</p>
+          <p>AI Confidence: {{ comprehensive_analysis.ai_analysis.ai_confidence }}%</p>
+          {% if comprehensive_analysis.ai_analysis.ai_indicators %}
+          <ul class="indicator-list">
+            {% for indicator in comprehensive_analysis.ai_analysis.ai_indicators %}
+            <li>{{ indicator }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </div>
+        
+        <div class="analysis-method">
+          <h4>⛓️ Blockchain Timestamp</h4>
+          <p class="method-score">Score: {{ comprehensive_analysis.blockchain_analysis.blockchain_score }}%</p>
+          <p>Hash: {{ comprehensive_analysis.blockchain_analysis.provenance_record.image_hash[:16] }}...</p>
+          <p>Timestamp: {{ comprehensive_analysis.blockchain_analysis.provenance_record.timestamp }}</p>
+          <p>Verification Hash: {{ comprehensive_analysis.blockchain_analysis.provenance_record.verification_hash[:16] }}...</p>
+        </div>
+        
+        <div class="analysis-method">
+          <h4>🔬 ELA Analysis</h4>
+          <p class="method-score">ELA Score: {{ ela_report.certainty }}%</p>
+          <p>Result: {{ ela_report.result }}</p>
+          <p>Mean Value: {{ "%.2f"|format(ela_report.ela_mean) }}</p>
+          <p>Standard Deviation: {{ "%.2f"|format(ela_report.ela_std) }}</p>
+        </div>
+      </div>
+    </div>
+    
+    {% else %}
+    <h3>🎯 ELA Authentication Report</h3>
     
     <div class="result-badge {{ ela_report.result.lower() }}">
       {{ ela_report.result.upper() }}
@@ -132,43 +258,83 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
       </ul>
     </div>
     
+    {% endif %}
+    
     <div class="export-section">
       <h4>📥 Export Results</h4>
-      <a href="#" onclick="downloadReport()" class="export-btn">Download JSON Report</a>
-      <a href="#" onclick="downloadSummary()" class="export-btn">Download Summary</a>
+      <button class="export-btn" onclick="downloadReport('json')">Download JSON Report</button>
+      <button class="export-btn" onclick="downloadReport('txt')">Download Text Report</button>
     </div>
   </div>
 </div>
 
 <script>
-function downloadReport() {
-  const report = {
-    filename: "{{ filename }}",
-    result: "{{ ela_report.result }}",
-    certainty: {{ ela_report.certainty }},
-    description: "{{ ela_report.description }}",
-    metrics: {
-      ela_mean: {{ ela_report.ela_mean }},
-      ela_std: {{ ela_report.ela_std }},
-      dimensions: "{{ ela_report.dimensions }}",
-      file_size: "{{ ela_report.file_size }}",
-      high_variance_percent: {{ ela_report.high_variance_percent }},
-      edge_density: {{ ela_report.edge_density }}
-    },
-    timestamp: new Date().toISOString()
-  };
-  
-  const blob = new Blob([JSON.stringify(report, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'image_analysis_report_{{ filename }}.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
+function downloadReport(format) {
+    {% if comprehensive_analysis %}
+    const reportData = {
+        filename: "{{ filename }}",
+        timestamp: new Date().toISOString(),
+        comprehensive_analysis: {{ comprehensive_analysis|tojson }},
+        ela_analysis: {
+            result: "{{ ela_report.result }}",
+            certainty: {{ ela_report.certainty }},
+            description: "{{ ela_report.description }}",
+            ela_mean: {{ ela_report.ela_mean }},
+            ela_std: {{ ela_report.ela_std }},
+            dimensions: "{{ ela_report.dimensions }}",
+            file_size: "{{ ela_report.file_size }}",
+            high_variance_percent: {{ ela_report.high_variance_percent }},
+            edge_density: {{ ela_report.edge_density }}
+        }
+    };
+    {% else %}
+    const reportData = {
+        filename: "{{ filename }}",
+        timestamp: new Date().toISOString(),
+        ela_analysis: {
+            result: "{{ ela_report.result }}",
+            certainty: {{ ela_report.certainty }},
+            description: "{{ ela_report.description }}",
+            ela_mean: {{ ela_report.ela_mean }},
+            ela_std: {{ ela_report.ela_std }},
+            dimensions: "{{ ela_report.dimensions }}",
+            file_size: "{{ ela_report.file_size }}",
+            high_variance_percent: {{ ela_report.high_variance_percent }},
+            edge_density: {{ ela_report.edge_density }}
+        }
+    };
+    {% endif %}
+    
+    if (format === 'json') {
+        const blob = new Blob([JSON.stringify(reportData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'image_analysis_report_{{ filename }}.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    } else if (format === 'txt') {
+        {% if comprehensive_analysis %}
+        const summary = `Comprehensive Image Authentication Report
+==========================================
+File: {{ filename }}
+Overall Result: {{ comprehensive_analysis.overall_result }}
+Overall Confidence: {{ comprehensive_analysis.overall_score }}%
 
-function downloadSummary() {
-  const summary = `Image Authentication Report
+Analysis Methods:
+- Metadata Analysis: {{ comprehensive_analysis.metadata_analysis.metadata_score }}%
+- Compression Analysis: {{ comprehensive_analysis.compression_analysis.compression_score }}%
+- Copy-Move Detection: {{ comprehensive_analysis.copy_move_analysis.copy_move_score }}%
+- Noise Pattern Analysis: {{ comprehensive_analysis.noise_analysis.noise_score }}%
+- Histogram Analysis: {{ comprehensive_analysis.histogram_analysis.histogram_score }}%
+- AI Detection: {{ comprehensive_analysis.ai_analysis.ai_score }}%
+- Blockchain Timestamp: {{ comprehensive_analysis.blockchain_analysis.blockchain_score }}%
+- ELA Analysis: {{ ela_report.certainty }}%
+
+Generated: ${new Date().toLocaleString()}
+`;
+        {% else %}
+        const summary = `Image Authentication Report
 ========================
 File: {{ filename }}
 Result: {{ ela_report.result }}
@@ -185,14 +351,16 @@ Technical Metrics:
 
 Generated: ${new Date().toLocaleString()}
 `;
-  
-  const blob = new Blob([summary], {type: 'text/plain'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'image_analysis_summary_{{ filename }}.txt';
-  a.click();
-  URL.revokeObjectURL(url);
+        {% endif %}
+        
+        const blob = new Blob([summary], {type: 'text/plain'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'image_analysis_summary_{{ filename }}.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
 }
 </script>
 {% endif %}
@@ -217,6 +385,7 @@ def serve_ela_image(filename):
 def upload_file():
     filename = None
     error = None
+    comprehensive_analysis = None
     ela_report = {"description": "No analysis performed yet.", "result": "Unknown", "certainty": 0, 
                  "ela_mean": 0, "ela_std": 0, "dimensions": "Unknown", "file_size": "Unknown",
                  "high_variance_percent": 0, "edge_density": 0}
@@ -233,13 +402,23 @@ def upload_file():
             print(f"[ERROR] {error}", flush=True)
             return render_template_string(HTML, filename=None, error=error)
         try:
-            # Send the file to foto-forensics with the sanitized filename as a parameter
-            response = requests.post('http://foto-forensics:5000/upload', files={'file': open(filepath, 'rb')}, data={'filename': safe_filename})
-            print(f"[INFO] Sent file to foto-forensics, response status: {response.status_code}", flush=True)
+            # Send the file to foto-forensics for comprehensive analysis
+            response = requests.post('http://foto-forensics:5000/analyze', files={'file': open(filepath, 'rb')}, data={'filename': safe_filename})
+            print(f"[INFO] Sent file to foto-forensics for comprehensive analysis, response status: {response.status_code}", flush=True)
+            
+            if response.status_code == 200:
+                comprehensive_analysis = response.json()
+                print(f"[INFO] Received comprehensive analysis results", flush=True)
+            else:
+                comprehensive_analysis = None
+                print(f"[WARNING] Comprehensive analysis failed, falling back to ELA only", flush=True)
+                
+            ela_response = requests.post('http://foto-forensics:5000/upload', files={'file': open(filepath, 'rb')}, data={'filename': safe_filename})
+            print(f"[INFO] Sent file for ELA generation, response status: {ela_response.status_code}", flush=True)
         except Exception as e:
             error = f"Failed to send file to foto-forensics: {e}"
             print(f"[ERROR] {error}", flush=True)
-            return render_template_string(HTML, filename=None, error=error)
+            return render_template_string(HTML, filename=None, error=error, comprehensive_analysis=None)
         filename = safe_filename
         # Enhanced ELA report analysis
         ela_path = os.path.join(app.config['UPLOAD_FOLDER'], f'ela_{filename}')
@@ -305,7 +484,7 @@ def upload_file():
                     "high_variance_percent": 0, 
                     "edge_density": 0
                 }
-    return render_template_string(HTML, filename=filename, error=error, ela_report=ela_report)
+    return render_template_string(HTML, filename=filename, error=error, ela_report=ela_report, comprehensive_analysis=comprehensive_analysis)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
