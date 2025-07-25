@@ -10,8 +10,12 @@ from werkzeug.utils import secure_filename
 import cv2
 import hashlib
 from datetime import datetime
+from dutch_insurance_rules import DutchInsuranceAuthenticityRules
 
 app = Flask(__name__)
+
+# Initialize Dutch Insurance Authenticity Rules
+dutch_rules = DutchInsuranceAuthenticityRules()
 
 def extract_exif_metadata(image_path):
     """Extract and analyze EXIF metadata for authenticity verification"""
@@ -429,24 +433,33 @@ def analyze_image():
         ai_analysis = detect_ai_generated_images(path)
         print(f"[INFO] AI detection analysis complete", flush=True)
         
-        scores = [
-            metadata_analysis['metadata_score'],
-            compression_analysis['compression_score'],
-            copy_move_analysis['copy_move_score'],
-            noise_analysis['noise_score'],
-            histogram_analysis['histogram_score'],
-            blockchain_analysis['blockchain_score'],
-            ai_analysis['ai_score']
-        ]
+        # Apply Dutch Insurance Industry authenticity rules
+        all_analysis_results = {
+            'metadata_analysis': metadata_analysis,
+            'compression_analysis': compression_analysis,
+            'copy_move_analysis': copy_move_analysis,
+            'noise_analysis': noise_analysis,
+            'histogram_analysis': histogram_analysis,
+            'blockchain_analysis': blockchain_analysis,
+            'ai_analysis': ai_analysis
+        }
         
-        overall_score = sum(scores) / len(scores)
+        # Get authenticity decision using Dutch insurance rules
+        dutch_decision = dutch_rules.determine_authenticity(all_analysis_results)
         
-        if overall_score >= 70:
-            overall_result = "Authentic"
-        elif overall_score >= 40:
-            overall_result = "Suspicious"
-        else:
-            overall_result = "Likely Manipulated"
+        # Map Dutch insurance results to display format
+        overall_result = dutch_decision['authenticity_result']
+        overall_score = dutch_decision['confidence_score']
+        
+        # Add Dutch insurance specific information
+        dutch_compliance_info = {
+            'decision_reasoning': dutch_decision['decision_reasoning'],
+            'critical_flags': dutch_decision['critical_flags'],
+            'requires_human_review': dutch_decision['requires_human_review'],
+            'compliance_status': dutch_decision['compliance_status'],
+            'weighted_score': dutch_decision['weighted_score'],
+            'rule_version': dutch_decision['rule_version']
+        }
         
         analysis_result = {
             'filename': safe_filename,
@@ -459,6 +472,7 @@ def analyze_image():
             'histogram_analysis': histogram_analysis,
             'blockchain_analysis': blockchain_analysis,
             'ai_analysis': ai_analysis,
+            'dutch_insurance_compliance': dutch_compliance_info,
             'timestamp': datetime.now().isoformat()
         }
         
@@ -468,6 +482,34 @@ def analyze_image():
     except Exception as e:
         print(f"[ERROR] Exception in analyze_image: {e}", flush=True)
         return jsonify({'error': f"Error analyzing image: {e}"}), 500
+
+@app.route('/compliance/audit-trail', methods=['GET'])
+def get_audit_trail():
+    """Get the complete audit trail for regulatory compliance"""
+    try:
+        audit_trail = dutch_rules.get_audit_trail()
+        return jsonify({
+            'audit_trail': audit_trail,
+            'total_decisions': len(audit_trail),
+            'compliance_standards': [
+                'DNB AI Guidelines',
+                'EU AI Act', 
+                'GDPR',
+                'Dutch Insurance Fraud Prevention Standards'
+            ],
+            'generated_at': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': f"Error retrieving audit trail: {e}"}), 500
+
+@app.route('/compliance/export', methods=['POST'])
+def export_compliance_report():
+    """Export compliance report for regulatory authorities"""
+    try:
+        filename = dutch_rules.export_compliance_report()
+        return send_file(filename, as_attachment=True, download_name=filename)
+    except Exception as e:
+        return jsonify({'error': f"Error exporting compliance report: {e}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

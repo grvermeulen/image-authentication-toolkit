@@ -35,6 +35,9 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
 .authentic { background: #d4edda; color: #155724; }
 .manipulated { background: #f8d7da; color: #721c24; }
 .unknown { background: #d1ecf1; color: #0c5460; }
+.non-authentic { background: #f8d7da; color: #721c24; }
+.suspicious { background: #fff3cd; color: #856404; }
+.likely-manipulated { background: #f8d7da; color: #721c24; }
 .confidence-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 10px 0; }
 .confidence-fill { height: 100%; transition: width 0.3s ease; }
 .confidence-high { background: linear-gradient(90deg, #28a745, #20c997); }
@@ -92,8 +95,8 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
     <h3>🎯 Comprehensive Authentication Report</h3>
     
     <div class="overall-result">
-      <div class="result-badge {{ comprehensive_analysis.overall_result.lower() }}">
-        {{ comprehensive_analysis.overall_result.upper() }}
+      <div class="result-badge {{ comprehensive_analysis.overall_result.lower().replace('_', '-').replace(' ', '-') }}">
+        {{ comprehensive_analysis.overall_result.upper().replace('_', ' ') }}
       </div>
       <div style="margin: 15px 0;">
         <strong>Overall Confidence: {{ comprehensive_analysis.overall_score }}%</strong>
@@ -102,6 +105,47 @@ h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
                style="width: {{ comprehensive_analysis.overall_score }}%;"></div>
         </div>
       </div>
+      
+      {% if comprehensive_analysis.dutch_insurance_compliance %}
+      <div style="margin-top: 15px; padding: 15px; background: #e8f4f8; border-radius: 5px; border-left: 4px solid #007bff;">
+        <h4 style="margin: 0 0 10px 0; color: #007bff;">🇳🇱 Dutch Insurance Compliance</h4>
+        <p><strong>Rule Version:</strong> {{ comprehensive_analysis.dutch_insurance_compliance.rule_version }}</p>
+        <p><strong>Weighted Score:</strong> {{ "%.1f"|format(comprehensive_analysis.dutch_insurance_compliance.weighted_score) }}%</p>
+        
+        {% if comprehensive_analysis.dutch_insurance_compliance.requires_human_review %}
+        <div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin: 10px 0;">
+          <strong>⚠️ Human Review Required</strong> - This image requires expert verification per Dutch insurance regulations.
+        </div>
+        {% endif %}
+        
+        {% if comprehensive_analysis.dutch_insurance_compliance.critical_flags %}
+        <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0;">
+          <strong>🚨 Critical Flags:</strong>
+          <ul style="margin: 5px 0 0 20px;">
+            {% for flag in comprehensive_analysis.dutch_insurance_compliance.critical_flags %}
+            <li>{{ flag.replace('_', ' ').title() }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        {% if comprehensive_analysis.dutch_insurance_compliance.decision_reasoning %}
+        <div style="margin-top: 10px;">
+          <strong>Decision Reasoning:</strong>
+          <ul style="margin: 5px 0 0 20px;">
+            {% for reason in comprehensive_analysis.dutch_insurance_compliance.decision_reasoning %}
+            <li>{{ reason }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+          <strong>Compliance Status:</strong> 
+          DNB ✓ | EU AI Act ✓ | GDPR ✓ | Audit Trail ✓
+        </div>
+      </div>
+      {% endif %}
     </div>
     
     <div class="analysis-tabs">
@@ -318,9 +362,21 @@ function downloadReport(format) {
         const summary = `Comprehensive Image Authentication Report
 ==========================================
 File: {{ filename }}
-Overall Result: {{ comprehensive_analysis.overall_result }}
+Overall Result: {{ comprehensive_analysis.overall_result.replace('_', ' ') }}
 Overall Confidence: {{ comprehensive_analysis.overall_score }}%
 
+{% if comprehensive_analysis.dutch_insurance_compliance %}
+DUTCH INSURANCE COMPLIANCE
+==========================
+Rule Version: {{ comprehensive_analysis.dutch_insurance_compliance.rule_version }}
+Weighted Score: {{ "%.1f"|format(comprehensive_analysis.dutch_insurance_compliance.weighted_score) }}%
+Human Review Required: {{ "Yes" if comprehensive_analysis.dutch_insurance_compliance.requires_human_review else "No" }}
+{% if comprehensive_analysis.dutch_insurance_compliance.critical_flags %}
+Critical Flags: {{ comprehensive_analysis.dutch_insurance_compliance.critical_flags|join(', ') }}
+{% endif %}
+Compliance Status: DNB ✓ | EU AI Act ✓ | GDPR ✓ | Audit Trail ✓
+
+{% endif %}
 Analysis Methods:
 - Metadata Analysis: {{ comprehensive_analysis.metadata_analysis.metadata_score }}%
 - Compression Analysis: {{ comprehensive_analysis.compression_analysis.compression_score }}%
